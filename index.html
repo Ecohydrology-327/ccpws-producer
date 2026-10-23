@@ -81,9 +81,17 @@ p { margin: 0; }
 .bar nav a:hover { color: var(--ink); }
 .bar nav.more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); }
 @media (max-width: 600px) { .bar .wrap { gap: 8px; } .bar nav { gap: 4px 13px; } .bar nav a { font-size: 0.84rem; } }
-.seg { display: inline-flex; border: 1.5px solid var(--accent); border-radius: 999px; overflow: hidden; flex: none; }
-.seg button { font: 700 0.82rem/1 var(--f-body); padding: 8px 12px; border: 0; background: transparent; color: var(--accent); cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+/* Units: English is the main choice (large pill); Metric is a small text option for academic readers */
+.units { display: inline-flex; align-items: center; gap: 10px; flex: none; }
+.units .u-main { font: 700 0.95rem/1 var(--f-body); padding: 10px 18px; border: 1.5px solid var(--accent); border-radius: 999px; background: transparent; color: var(--accent); cursor: pointer; }
+.units .u-main[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.units .u-alt { font: 600 0.78rem/1 var(--f-body); padding: 6px 2px; border: 0; background: transparent; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.units .u-alt[aria-pressed="true"] { color: var(--ink); text-decoration-thickness: 2px; }
+.units .u-main:focus-visible, .units .u-alt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 600px) { .units { gap: 6px; } .units .u-main { padding: 9px 13px; font-size: 0.9rem; } }
+.ack { max-width: 760px; margin-top: 22px; }
+.ack h3 { margin-bottom: 8px; }
+.ack p { margin: 0; }
 
 /* hero */
 .hero { padding-block: 40px 0; background: linear-gradient(180deg, var(--sky) 0%, var(--bg) 70%); }
@@ -355,9 +363,9 @@ details.alt ul { margin: 6px 0 0; padding-left: 1.2em; columns: 2 260px; color: 
     <nav aria-label="Sections">
       <a href="#answers">Quick answers</a><a href="#wateruse">Water use</a><a href="#changes">After the cut</a><a href="#takehome">For land managers</a><a href="#ahead">Looking ahead</a><a href="#learn">Contact</a>
     </nav>
-    <div class="seg" role="group" aria-label="Units">
-      <button type="button" id="uMetric" aria-pressed="true">Metric</button>
-      <button type="button" id="uEnglish" aria-pressed="false">English</button>
+    <div class="units" role="group" aria-label="Units">
+      <button type="button" class="u-main" id="uEnglish" aria-pressed="true" title="Feet, inches, acre-feet, gallons, &deg;F">English units</button>
+      <button type="button" class="u-alt" id="uMetric" aria-pressed="false" title="Show metric units (m, mm, m&sup3;, &deg;C)">Metric</button>
     </div>
   </div>
 </div>
@@ -676,7 +684,7 @@ details.alt ul { margin: 6px 0 0; padding-left: 1.2em; columns: 2 260px; color: 
     <div class="prose subhead" id="explore">
       <div class="eyebrow">Explore the long-term record</div>
       <h2>Three decades of measurements, 1994 to 2026</h2>
-      <p class="muted">Hover or tap a point for its value, or open "View these values as text" under any chart. Every chart follows the Metric / English switch.</p>
+      <p class="muted">Hover or tap a point for its value, or open "View these values as text" under any chart. Every chart follows the English / Metric units switch at the top of the page.</p>
     </div>
     <div class="explore">
       <article class="xcard" id="xFlow">
@@ -776,6 +784,10 @@ details.alt ul { margin: 6px 0 0; padding-left: 1.2em; columns: 2 260px; color: 
         <p class="small"><a href="https://ecohydrology.oregonstate.edu" target="_blank" rel="noopener">ecohydrology.oregonstate.edu</a> &middot; <a href="https://ecohydrology.oregonstate.edu/pubs/publications-ecohydrology" target="_blank" rel="noopener">Study publications</a></p>
       </div>
     </div>
+    <div class="prose ack" id="acknowledgments">
+      <h3>Acknowledgments</h3>
+      <p>We want to thank the Hatfield Hyde Land Trust and the U.S. Department of the Interior Bureau of Land Management&mdash;Prineville Office for their continuous support of this project and providing access to the field sites. We are also grateful to the multiple students from Oregon State University and volunteers who over the years have participated in the various field data collection activities related to this research. Funding support for this project has come from many different state and federal agencies and organizations over the years. Our most heartfelt thanks go to Doc Hatfield, Tim Deboodt, Michael Fisher, and John Buckhouse, who pioneered the establishment of the long-term CCPWS site in 1993.</p>
+    </div>
   </div>
 </section>
 </main>
@@ -786,8 +798,8 @@ const DATA = {"thresholds":{"dry":282,"wet":342},"soil":{"dry":{"20cm":{"mays":1
   'use strict';
   const $ = id => document.getElementById(id);
   const MM_IN = 25.4, KGHA_LBAC = 0.892179, HA_AC = 2.471054, HA_PER_AC = 0.404686;
-  let units = 'metric';
-  try { const u = localStorage.getItem('ccpwsUnits'); if (u === 'english' || u === 'metric') units = u; } catch (e) {}
+  let units = 'english';      // default English (2026-10-23); key renamed so earlier visits (saved 'metric' by default) start in English
+  try { const u = localStorage.getItem('ccpwsUnits2'); if (u === 'english' || u === 'metric') units = u; } catch (e) {}
   const eng = () => units === 'english';
   const sgn = (v, d) => (v > 0.0001 ? '+' : v < -0.0001 ? '−' : '') + Math.abs(v).toFixed(d);
   const fmt = (v, d) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -1313,7 +1325,7 @@ const DATA = {"thresholds":{"dry":282,"wet":342},"soil":{"dry":{"20cm":{"mays":1
   new MutationObserver(() => { clearTimeout(altT); altT = setTimeout(addAlts, 60); }).observe(document.querySelector('main'), { childList: true, subtree: true });
   function renderAll() { renderAbout(); renderSummary(); renderChanges(); renderExplore(); addAlts(); }
   function setUnits(u) {
-    units = u; try { localStorage.setItem('ccpwsUnits', u); } catch (e) {}
+    units = u; try { localStorage.setItem('ccpwsUnits2', u); } catch (e) {}
     $('uMetric').setAttribute('aria-pressed', u === 'metric'); $('uEnglish').setAttribute('aria-pressed', u === 'english');
     renderAll();
   }
